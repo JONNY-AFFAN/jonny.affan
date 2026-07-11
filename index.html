@@ -1,0 +1,2211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JONNY AFFAN | A.N PHANTOM</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --green: #00ff41;
+            --dark-green: #00cc33;
+            --darker-green: #008f11;
+            --bg: #0d0d0d;
+            --card-bg: #0a0a0a;
+            --border: #00ff4133;
+            --glow: 0 0 10px #00ff41, 0 0 20px #00ff41, 0 0 40px #00ff41;
+            --glow-soft: 0 0 5px #00ff4180;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--green);
+            font-family: 'Courier New', monospace;
+            overflow-x: hidden;
+            cursor: crosshair;
+        }
+
+        /* ========== MATRIX CANVAS ========== */
+        #matrix-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.13;
+        }
+
+        /* ========== SCANLINE EFFECT ========== */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 255, 65, 0.015) 2px,
+                rgba(0, 255, 65, 0.015) 4px
+            );
+            pointer-events: none;
+            z-index: 9998;
+        }
+
+        /* ========== CURSOR TRAIL ========== */
+        .cursor-dot {
+            position: fixed;
+            width: 8px;
+            height: 8px;
+            background: var(--green);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            box-shadow: var(--glow);
+            transition: transform 0.1s;
+        }
+
+        /* ========== MAIN WRAPPER ========== */
+        .wrapper {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ========== TOP TERMINAL BAR ========== */
+        .terminal-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            border-bottom: 1px solid var(--green);
+            padding: 6px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .terminal-bar-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .terminal-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .dot-red { background: #ff5f57; }
+        .dot-yellow { background: #ffbd2e; }
+        .dot-green { background: #28ca41; }
+
+        .terminal-title {
+            font-size: 11px;
+            color: var(--darker-green);
+            letter-spacing: 2px;
+        }
+
+        .terminal-bar-right {
+            font-size: 10px;
+            color: var(--darker-green);
+            letter-spacing: 1px;
+        }
+
+        #live-time {
+            color: var(--green);
+            font-weight: bold;
+        }
+
+        /* ========== NAV ========== */
+        nav {
+            position: fixed;
+            top: 35px;
+            left: 0;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 999;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-logo {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--green);
+            text-shadow: var(--glow);
+            letter-spacing: 3px;
+            text-decoration: none;
+        }
+
+        .nav-logo span {
+            color: #fff;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--darker-green);
+            text-decoration: none;
+            font-size: 12px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            transition: all 0.3s;
+            position: relative;
+            padding: 4px 0;
+        }
+
+        .nav-links a::before {
+            content: '> ';
+            color: var(--green);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--green);
+            text-shadow: var(--glow-soft);
+        }
+
+        .nav-links a:hover::before {
+            opacity: 1;
+        }
+
+        .nav-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            color: var(--darker-green);
+        }
+
+        .status-pulse {
+            width: 8px;
+            height: 8px;
+            background: var(--green);
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+            box-shadow: 0 0 6px var(--green);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.8); }
+        }
+
+        /* ========== HERO SECTION ========== */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 120px 40px 60px;
+            position: relative;
+        }
+
+        .hero-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            max-width: 1200px;
+            width: 100%;
+            align-items: center;
+        }
+
+        /* ========== HERO LEFT ========== */
+        .hero-left {
+            position: relative;
+        }
+
+        .boot-sequence {
+            margin-bottom: 20px;
+        }
+
+        .boot-line {
+            font-size: 10px;
+            color: var(--darker-green);
+            letter-spacing: 1px;
+            margin-bottom: 2px;
+            opacity: 0;
+            animation: bootFade 0.3s forwards;
+        }
+
+        .boot-line:nth-child(1) { animation-delay: 0.1s; }
+        .boot-line:nth-child(2) { animation-delay: 0.3s; }
+        .boot-line:nth-child(3) { animation-delay: 0.5s; }
+        .boot-line:nth-child(4) { animation-delay: 0.7s; }
+        .boot-line:nth-child(5) { animation-delay: 0.9s; }
+
+        @keyframes bootFade {
+            to { opacity: 1; }
+        }
+
+        .hero-tag {
+            font-size: 11px;
+            color: var(--darker-green);
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        .hero-tag span {
+            color: var(--green);
+        }
+
+        .hero-name {
+            font-size: clamp(32px, 5vw, 56px);
+            font-weight: bold;
+            line-height: 1.1;
+            margin-bottom: 8px;
+            text-shadow: var(--glow);
+            position: relative;
+        }
+
+        .hero-name .cursor-blink {
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        .hero-alias {
+            font-size: 22px;
+            color: var(--darker-green);
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+        }
+
+        .hero-alias span {
+            color: var(--green);
+        }
+
+        .hero-desc {
+            font-size: 13px;
+            color: #00883a;
+            line-height: 1.8;
+            margin-bottom: 30px;
+            border-left: 2px solid var(--green);
+            padding-left: 16px;
+        }
+
+        .hero-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .badge {
+            border: 1px solid var(--green);
+            padding: 5px 14px;
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: var(--green);
+            text-transform: uppercase;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .badge::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--green);
+            transition: left 0.3s;
+            z-index: -1;
+        }
+
+        .badge:hover::before {
+            left: 0;
+        }
+
+        .badge:hover {
+            color: #000;
+        }
+
+        .hero-btns {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            background: transparent;
+            border: 1px solid var(--green);
+            color: var(--green);
+            padding: 12px 28px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--green);
+            transition: left 0.3s;
+            z-index: -1;
+        }
+
+        .btn-primary:hover::before { left: 0; }
+        .btn-primary:hover { color: #000; box-shadow: var(--glow); }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--darker-green);
+            color: var(--darker-green);
+            padding: 12px 28px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--green);
+            color: var(--green);
+        }
+
+        /* ========== HERO RIGHT - TERMINAL ========== */
+        .hero-right {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .terminal-window {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(0, 255, 65, 0.1);
+        }
+
+        .terminal-header {
+            background: rgba(0, 255, 65, 0.05);
+            padding: 8px 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .terminal-header-dots {
+            display: flex;
+            gap: 5px;
+        }
+
+        .th-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .th-dot-r { background: #ff5f57; }
+        .th-dot-y { background: #ffbd2e; }
+        .th-dot-g { background: #28ca41; }
+
+        .terminal-header-title {
+            font-size: 10px;
+            color: var(--darker-green);
+            letter-spacing: 2px;
+            margin-left: 10px;
+        }
+
+        .terminal-body {
+            padding: 16px;
+            font-size: 11px;
+            line-height: 2;
+        }
+
+        .t-line {
+            display: flex;
+            gap: 8px;
+        }
+
+        .t-prompt { color: var(--green); }
+        .t-cmd { color: #fff; }
+        .t-out { color: var(--darker-green); padding-left: 0; }
+        .t-success { color: var(--green); }
+        .t-error { color: #ff4444; }
+        .t-info { color: #4488ff; }
+        .t-warn { color: #ffaa00; }
+
+        .typing-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 12px;
+            background: var(--green);
+            animation: blink 1s infinite;
+            vertical-align: middle;
+        }
+
+        /* ========== SECTION BASE ========== */
+        section {
+            padding: 80px 40px;
+            position: relative;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            margin-bottom: 50px;
+        }
+
+        .section-tag {
+            font-size: 10px;
+            letter-spacing: 4px;
+            color: var(--darker-green);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .section-title {
+            font-size: clamp(24px, 4vw, 42px);
+            font-weight: bold;
+            text-shadow: var(--glow-soft);
+            position: relative;
+            display: inline-block;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            width: 60px;
+            height: 2px;
+            background: var(--green);
+            box-shadow: var(--glow-soft);
+        }
+
+        .section-line {
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, var(--green), transparent);
+            margin-top: 20px;
+            opacity: 0.3;
+        }
+
+        /* ========== ABOUT SECTION ========== */
+        .about-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+        }
+
+        .about-card {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--border);
+            padding: 28px;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .about-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 3px;
+            height: 100%;
+            background: var(--green);
+            box-shadow: var(--glow-soft);
+        }
+
+        .about-card:hover {
+            border-color: var(--green);
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.1);
+            transform: translateX(4px);
+        }
+
+        .about-card h3 {
+            font-size: 13px;
+            letter-spacing: 3px;
+            color: var(--green);
+            text-transform: uppercase;
+            margin-bottom: 16px;
+        }
+
+        .info-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 8px;
+            font-size: 12px;
+            align-items: flex-start;
+        }
+
+        .info-key {
+            color: var(--darker-green);
+            min-width: 90px;
+            letter-spacing: 1px;
+        }
+
+        .info-val {
+            color: #ccc;
+            flex: 1;
+        }
+
+        .info-val span {
+            color: var(--green);
+        }
+
+        /* ========== SKILLS SECTION ========== */
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        .skill-card {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--border);
+            padding: 24px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .skill-card::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, rgba(0,255,65,0.05) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .skill-card:hover {
+            border-color: var(--green);
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.1);
+            transform: translateY(-4px);
+        }
+
+        .skill-card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .skill-icon {
+            font-size: 22px;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border);
+            background: rgba(0, 255, 65, 0.05);
+        }
+
+        .skill-card-header h3 {
+            font-size: 13px;
+            letter-spacing: 2px;
+            color: var(--green);
+        }
+
+        .skill-item {
+            margin-bottom: 14px;
+        }
+
+        .skill-top {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            margin-bottom: 5px;
+        }
+
+        .skill-name { color: #aaa; }
+        .skill-pct { color: var(--green); }
+
+        .skill-bar {
+            height: 4px;
+            background: rgba(0, 255, 65, 0.1);
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .skill-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--darker-green), var(--green));
+            box-shadow: 0 0 8px var(--green);
+            animation: fillBar 1.5s ease-out forwards;
+            width: 0;
+        }
+
+        @keyframes fillBar {
+            to { width: var(--fill); }
+        }
+
+        /* ========== PROJECTS SECTION ========== */
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+        }
+
+        .project-card {
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid var(--border);
+            padding: 28px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .project-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--green), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.5s;
+        }
+
+        .project-card:hover::before {
+            transform: translateX(100%);
+        }
+
+        .project-card:hover {
+            border-color: var(--green);
+            box-shadow: 0 0 30px rgba(0, 255, 65, 0.1);
+            transform: translateY(-6px);
+        }
+
+        .project-num {
+            font-size: 48px;
+            font-weight: bold;
+            color: rgba(0, 255, 65, 0.06);
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            line-height: 1;
+        }
+
+        .project-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 9px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 14px;
+        }
+
+        .project-status.active { color: var(--green); }
+        .project-status.dev { color: #ffaa00; }
+        .project-status.planned { color: #4488ff; }
+
+        .project-status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 2s infinite;
+        }
+
+        .project-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--green);
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+            text-shadow: var(--glow-soft);
+        }
+
+        .project-desc {
+            font-size: 12px;
+            color: #00883a;
+            line-height: 1.7;
+            margin-bottom: 18px;
+        }
+
+        .project-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 18px;
+        }
+
+        .project-tag {
+            font-size: 9px;
+            letter-spacing: 1px;
+            border: 1px solid var(--border);
+            padding: 3px 8px;
+            color: var(--darker-green);
+        }
+
+        .project-footer {
+            display: flex;
+            gap: 10px;
+        }
+
+        .project-link {
+            font-size: 10px;
+            color: var(--darker-green);
+            text-decoration: none;
+            letter-spacing: 1px;
+            transition: color 0.3s;
+        }
+
+        .project-link:hover { color: var(--green); }
+
+        /* ========== PHANTOM AI SECTION ========== */
+        .phantom-section {
+            background: rgba(0, 20, 0, 0.5);
+            border: 1px solid var(--border);
+            padding: 50px;
+            position: relative;
+            overflow: hidden;
+            margin: 40px 0;
+        }
+
+        .phantom-section::before {
+            content: 'A.N PHANTOM';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 120px;
+            font-weight: bold;
+            color: rgba(0, 255, 65, 0.02);
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        .phantom-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: center;
+        }
+
+        .phantom-info h2 {
+            font-size: 36px;
+            color: var(--green);
+            text-shadow: var(--glow);
+            margin-bottom: 6px;
+        }
+
+        .phantom-info .phantom-sub {
+            font-size: 12px;
+            letter-spacing: 4px;
+            color: var(--darker-green);
+            margin-bottom: 24px;
+        }
+
+        .phantom-info p {
+            font-size: 13px;
+            color: #00883a;
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+
+        .phantom-features {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .phantom-feat {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            color: var(--darker-green);
+        }
+
+        .phantom-feat::before {
+            content: '▶';
+            color: var(--green);
+            font-size: 8px;
+        }
+
+        .phantom-terminal {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        /* ========== STATS SECTION ========== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 60px;
+        }
+
+        .stat-card {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--border);
+            padding: 28px 20px;
+            text-align: center;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .stat-card:hover {
+            border-color: var(--green);
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.1);
+            transform: translateY(-4px);
+        }
+
+        .stat-num {
+            font-size: 40px;
+            font-weight: bold;
+            color: var(--green);
+            text-shadow: var(--glow-soft);
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: var(--darker-green);
+            text-transform: uppercase;
+            margin-top: 6px;
+        }
+
+        /* ========== LEARNING PATH ========== */
+        .path-container {
+            position: relative;
+        }
+
+        .path-line {
+            position: absolute;
+            left: 20px;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: linear-gradient(180deg, var(--green), transparent);
+        }
+
+        .path-item {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 30px;
+            padding-left: 50px;
+            position: relative;
+        }
+
+        .path-dot {
+            position: absolute;
+            left: 14px;
+            top: 10px;
+            width: 13px;
+            height: 13px;
+            border: 2px solid var(--green);
+            border-radius: 50%;
+            background: var(--bg);
+        }
+
+        .path-dot.active {
+            background: var(--green);
+            box-shadow: var(--glow);
+        }
+
+        .path-content {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--border);
+            padding: 20px 24px;
+            flex: 1;
+            transition: all 0.3s;
+        }
+
+        .path-content:hover {
+            border-color: var(--green);
+        }
+
+        .path-content h3 {
+            font-size: 14px;
+            color: var(--green);
+            letter-spacing: 2px;
+            margin-bottom: 6px;
+        }
+
+        .path-content p {
+            font-size: 12px;
+            color: #00883a;
+            line-height: 1.6;
+        }
+
+        .path-label {
+            font-size: 9px;
+            letter-spacing: 2px;
+            color: var(--darker-green);
+            margin-bottom: 6px;
+        }
+
+        /* ========== CONTACT SECTION ========== */
+        .contact-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+        }
+
+        .contact-info h3 {
+            font-size: 13px;
+            letter-spacing: 3px;
+            color: var(--green);
+            margin-bottom: 20px;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 16px;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            background: rgba(0, 0, 0, 0.4);
+            transition: all 0.3s;
+        }
+
+        .contact-item:hover {
+            border-color: var(--green);
+            transform: translateX(6px);
+        }
+
+        .contact-icon {
+            font-size: 16px;
+            width: 36px;
+            text-align: center;
+        }
+
+        .contact-item-info {
+            flex: 1;
+        }
+
+        .contact-item-label {
+            font-size: 9px;
+            letter-spacing: 2px;
+            color: var(--darker-green);
+            margin-bottom: 2px;
+        }
+
+        .contact-item-val {
+            font-size: 12px;
+            color: #ccc;
+        }
+
+        .contact-form {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--border);
+            padding: 30px;
+        }
+
+        .contact-form h3 {
+            font-size: 13px;
+            letter-spacing: 3px;
+            color: var(--green);
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: var(--darker-green);
+            margin-bottom: 6px;
+        }
+
+        .form-input,
+        .form-textarea {
+            width: 100%;
+            background: rgba(0, 255, 65, 0.03);
+            border: 1px solid var(--border);
+            color: var(--green);
+            padding: 10px 14px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .form-input:focus,
+        .form-textarea:focus {
+            border-color: var(--green);
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.1);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-input::placeholder,
+        .form-textarea::placeholder {
+            color: var(--darker-green);
+            opacity: 0.5;
+        }
+
+        /* ========== FOOTER ========== */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 30px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.8);
+            position: relative;
+        }
+
+        .footer-left {
+            font-size: 11px;
+            color: var(--darker-green);
+            line-height: 1.8;
+        }
+
+        .footer-left span {
+            color: var(--green);
+        }
+
+        .footer-center {
+            text-align: center;
+        }
+
+        .footer-logo {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--green);
+            text-shadow: var(--glow-soft);
+            letter-spacing: 3px;
+        }
+
+        .footer-right {
+            font-size: 10px;
+            color: var(--darker-green);
+            text-align: right;
+            line-height: 1.8;
+        }
+
+        /* ========== GLITCH TEXT ========== */
+        .glitch {
+            position: relative;
+            display: inline-block;
+        }
+
+        .glitch::before,
+        .glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .glitch::before {
+            left: 2px;
+            text-shadow: -2px 0 #ff0040;
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim 5s infinite linear alternate-reverse;
+        }
+
+        .glitch::after {
+            left: -2px;
+            text-shadow: 2px 0 #00ffe5;
+            clip: rect(24px, 450px, 66px, 0);
+            animation: glitch-anim2 5s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitch-anim {
+            0% { clip: rect(30px, 9999px, 10px, 0); }
+            20% { clip: rect(54px, 9999px, 98px, 0); }
+            40% { clip: rect(82px, 9999px, 34px, 0); }
+            60% { clip: rect(14px, 9999px, 62px, 0); }
+            80% { clip: rect(66px, 9999px, 22px, 0); }
+            100% { clip: rect(44px, 9999px, 76px, 0); }
+        }
+
+        @keyframes glitch-anim2 {
+            0% { clip: rect(76px, 9999px, 52px, 0); }
+            20% { clip: rect(22px, 9999px, 86px, 0); }
+            40% { clip: rect(60px, 9999px, 18px, 0); }
+            60% { clip: rect(36px, 9999px, 74px, 0); }
+            80% { clip: rect(94px, 9999px, 44px, 0); }
+            100% { clip: rect(12px, 9999px, 56px, 0); }
+        }
+
+        /* ========== SCROLLBAR ========== */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #000;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--darker-green);
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--green);
+        }
+
+        /* ========== DIVIDER ========== */
+        .divider {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 40px;
+        }
+
+        .divider-line {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border), transparent);
+        }
+
+        /* ========== HEX GRID BG ========== */
+        .hex-bg {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 300px;
+            height: 300px;
+            opacity: 0.03;
+            background-image:
+                repeating-linear-gradient(60deg, var(--green) 0, var(--green) 1px, transparent 0, transparent 50%),
+                repeating-linear-gradient(120deg, var(--green) 0, var(--green) 1px, transparent 0, transparent 50%),
+                repeating-linear-gradient(180deg, var(--green) 0, var(--green) 1px, transparent 0, transparent 50%);
+            background-size: 40px 40px;
+            pointer-events: none;
+        }
+
+        /* ========== LOADING OVERLAY ========== */
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.8s;
+        }
+
+        #loading.hide {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-text {
+            color: var(--green);
+            font-size: 13px;
+            letter-spacing: 3px;
+            margin-bottom: 30px;
+        }
+
+        .loading-bar-wrap {
+            width: 300px;
+            height: 2px;
+            background: rgba(0, 255, 65, 0.1);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .loading-bar-fill {
+            height: 100%;
+            width: 0;
+            background: var(--green);
+            box-shadow: var(--glow);
+            animation: loadFill 2s ease-out forwards;
+        }
+
+        @keyframes loadFill {
+            to { width: 100%; }
+        }
+
+        .loading-lines {
+            margin-top: 24px;
+            font-size: 10px;
+            color: var(--darker-green);
+            letter-spacing: 1px;
+            text-align: center;
+            line-height: 1.8;
+        }
+
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 768px) {
+            .hero-container { grid-template-columns: 1fr; }
+            .about-grid { grid-template-columns: 1fr; }
+            .phantom-grid { grid-template-columns: 1fr; }
+            .contact-grid { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            nav { padding: 12px 20px; }
+            .nav-links { gap: 16px; }
+            footer { flex-direction: column; gap: 20px; text-align: center; }
+            section { padding: 60px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- LOADING SCREEN -->
+<div id="loading">
+    <div class="loading-text">[ INITIALIZING A.N PHANTOM SYSTEM ]</div>
+    <div class="loading-bar-wrap">
+        <div class="loading-bar-fill"></div>
+    </div>
+    <div class="loading-lines" id="loading-lines">
+        LOADING MODULES...<br>
+        ESTABLISHING CONNECTION...<br>
+        DECRYPTING USER PROFILE...<br>
+        SYSTEM READY.
+    </div>
+</div>
+
+<!-- CURSOR DOT -->
+<div class="cursor-dot" id="cursorDot"></div>
+
+<!-- MATRIX CANVAS -->
+<canvas id="matrix-canvas"></canvas>
+
+<div class="wrapper">
+
+    <!-- TERMINAL TOP BAR -->
+    <div class="terminal-bar">
+        <div class="terminal-bar-left">
+            <div class="terminal-dots">
+                <div class="dot dot-red"></div>
+                <div class="dot dot-yellow"></div>
+                <div class="dot dot-green"></div>
+            </div>
+            <span class="terminal-title">JONNY@PHANTOM:~$ — BASH — 80×24</span>
+        </div>
+        <div class="terminal-bar-right">
+            SYS: ONLINE &nbsp;|&nbsp; NET: ACTIVE &nbsp;|&nbsp; <span id="live-time">00:00:00</span>
+        </div>
+    </div>
+
+    <!-- NAV -->
+    <nav>
+        <a href="#" class="nav-logo">JONNY<span>AFFAN</span></a>
+        <ul class="nav-links">
+            <li><a href="#about">About</a></li>
+            <li><a href="#skills">Skills</a></li>
+            <li><a href="#projects">Projects</a></li>
+            <li><a href="#phantom">Phantom</a></li>
+            <li><a href="#contact">Contact</a></li>
+        </ul>
+        <div class="nav-status">
+            <div class="status-pulse"></div>
+            <span>SYSTEM ACTIVE</span>
+        </div>
+    </nav>
+
+    <!-- ========== HERO ========== -->
+    <section class="hero" id="home">
+        <div class="hero-container">
+            <div class="hero-left">
+                <div class="boot-sequence">
+                    <div class="boot-line">[  OK  ] Starting phantom-core.service...</div>
+                    <div class="boot-line">[  OK  ] Loading user profile: AFFAN_NADEEM</div>
+                    <div class="boot-line">[  OK  ] Mounting system modules... done</div>
+                    <div class="boot-line">[  OK  ] Network interface: CONNECTED</div>
+                    <div class="boot-line">[  OK  ] <span style="color:var(--green)">PHANTOM OS v2.0.9 ready.</span></div>
+                </div>
+
+                <div class="hero-tag">// <span>ROOT@PHANTOM</span>:~$ cat identity.txt</div>
+
+                <h1 class="hero-name glitch" data-text="JONNY AFFAN">
+                    JONNY AFFAN<span class="cursor-blink">_</span>
+                </h1>
+
+                <div class="hero-alias">
+                    a.k.a <span>Muhammad Affan Nadeem</span>
+                </div>
+
+                <p class="hero-desc">
+                    // Student. Builder. Learner.<br>
+                    // Web Dev • AI Enthusiast • App Developer<br>
+                    // Not professional yet — just learning,<br>
+                    // building, and having fun every day.
+                </p>
+
+                <div class="hero-badges">
+                    <div class="badge">Web Dev</div>
+                    <div class="badge">AI Builder</div>
+                    <div class="badge">App Dev</div>
+                    <div class="badge">Python</div>
+                    <div class="badge">Student</div>
+                </div>
+
+                <div class="hero-btns">
+                    <a href="#projects" class="btn-primary">./view_projects</a>
+                    <a href="#contact" class="btn-secondary">./contact_me</a>
+                </div>
+            </div>
+
+            <div class="hero-right">
+                <!-- TERMINAL 1 -->
+                <div class="terminal-window">
+                    <div class="terminal-header">
+                        <div class="terminal-header-dots">
+                            <div class="th-dot th-dot-r"></div>
+                            <div class="th-dot th-dot-y"></div>
+                            <div class="th-dot th-dot-g"></div>
+                        </div>
+                        <div class="terminal-header-title">phantom-shell — whoami</div>
+                    </div>
+                    <div class="terminal-body">
+                        <div class="t-line"><span class="t-prompt">root@phantom:~$</span> <span class="t-cmd">whoami --full</span></div>
+                        <div class="t-line"><span class="t-out">NAME &nbsp;&nbsp;&nbsp;&nbsp;: Muhammad Affan Nadeem</span></div>
+                        <div class="t-line"><span class="t-out">ALIAS &nbsp;&nbsp;&nbsp;: Jonny Affan</span></div>
+                        <div class="t-line"><span class="t-out">DOB &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: 02 August 2009</span></div>
+                        <div class="t-line"><span class="t-out">VILLAGE &nbsp;: 211-9R, Fort Abbas</span></div>
+                        <div class="t-line"><span class="t-out">PROVINCE : Punjab, Pakistan</span></div>
+                        <div class="t-line"><span class="t-out">COLLEGE &nbsp;: Punjab College Fort Abbas</span></div>
+                        <div class="t-line"><span class="t-out">YEAR &nbsp;&nbsp;&nbsp;&nbsp;: 1st Year</span></div>
+                        <div class="t-line"><span class="t-out">STATUS &nbsp;&nbsp;: <span class="t-success">LEARNING & BUILDING</span></span></div>
+                        <div class="t-line"><span class="t-prompt">root@phantom:~$</span> <span class="typing-cursor"></span></div>
+                    </div>
+                </div>
+
+                <!-- TERMINAL 2 -->
+                <div class="terminal-window">
+                    <div class="terminal-header">
+                        <div class="terminal-header-dots">
+                            <div class="th-dot th-dot-r"></div>
+                            <div class="th-dot th-dot-y"></div>
+                            <div class="th-dot th-dot-g"></div>
+                        </div>
+                        <div class="terminal-header-title">phantom-shell — sys.status</div>
+                    </div>
+                    <div class="terminal-body">
+                        <div class="t-line"><span class="t-prompt">root@phantom:~$</span> <span class="t-cmd">./run_status.sh</span></div>
+                        <div class="t-line"><span class="t-success">[✓] A.N PHANTOM AI &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: IN DEVELOPMENT</span></div>
+                        <div class="t-line"><span class="t-success">[✓] Web Projects &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: BUILDING</span></div>
+                        <div class="t-line"><span class="t-warn">[~] Python Skills &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: LEARNING</span></div>
+                        <div class="t-line"><span class="t-warn">[~] Mobile Apps &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: LEARNING</span></div>
+                        <div class="t-line"><span class="t-info">[i] Motivation &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: MAX LEVEL</span></div>
+                        <div class="t-line"><span class="t-info">[i] Coffee Level &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: CRITICAL ☕</span></div>
+                        <div class="t-line"><span class="t-prompt">root@phantom:~$</span> <span class="typing-cursor"></span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="divider"><div class="divider-line"></div></div>
+
+    <!-- ========== STATS ========== -->
+    <section id="stats">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-num" data-count="15">0</span>
+                <span class="stat-label">Age (Years)</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-num" data-count="1">0</span>
+                <span class="stat-label">Year In College</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-num" data-count="5">0</span>
+                <span class="stat-label">Languages Learning</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-num" data-count="1">0</span>
+                <span class="stat-label">AI Project (Phantom)</span>
+            </div>
+        </div>
+    </section>
+
+    <div class="divider"><div class="divider-line"></div></div>
+
+    <!-- ========== ABOUT ========== -->
+    <section id="about">
+        <div class="section-header">
+            <div class="section-tag">// section_02 — about.exe</div>
+            <h2 class="section-title">WHO AM I<span class="cursor-blink">_</span></h2>
+            <div class="section-line"></div>
+        </div>
+
+        <div class="about-grid">
+            <div class="about-card">
+                <h3>[ IDENTITY.LOG ]</h3>
+                <div class="info-row">
+                    <span class="info-key">FULL NAME</span>
+                    <span class="info-val"><span>Muhammad Affan Nadeem</span></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-key">ALIAS</span>
+                    <span class="info-val"><span>Jonny Affan</span></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-key">BORN</span>
+                    <span class="info-val"><span>02 August 2009</span></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-key">AGE</span>
+                    <span class="info-val"><span>15 Years</span></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-key">VILLAGE</span>
+                    <span class="info-val"><span>211-9R</span></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-key">CITY</span>
+                    <span class="info-val"><span>Fort Abbas</span></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-key">PROVINCE</span>
+                    <span class="info-val"><span>Punjab</span></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-key">COUNTRY</span>
+                    <span class="info-val"><span>Pakistan 🇵🇰</span></span>
+                </div>
+            </div>
+
+            <div class="about-card">
+                <h3>[ EDUCATION.LOG ]</h3>
+                <div class="info-row">
+                    <span class="info-key">INSTITUTION</span>
+                    <span class="info-val"><span>Punjab College Fort Abbas</span></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-key">YEAR</span>
+                    <span class="info-val"><span>1st Year (Current)</span></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-key">FOCUS</span>
+                    <span class="info-val">Science + Technology</span>
+                </div>
+                <br>
+                <h3>[ MISSION.LOG ]</h3>
+                <div class="info-row">
+                    <span class="info-key">GOAL</span>
+                    <span class="info-val"><span>Build cool things & keep improving</span></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-key">LEARNING</span>
+                    <span class="info-val">Web Dev • AI • Mobile • Python</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-key">AI PROJECT</span>
+                    <span class="info-val"><span>A.N PHANTOM (In Dev)</span></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-key">MINDSET</span>
+                    <span class="info-val"><span>Never Stop Building</span></span>
+                </div>
+            </div>
+
+            <div class="about-card">
+                <h3>[ SYSTEM.CONFIG ]</h3>
+                <div class="info-row">
+                    <span class="info-key">ROLE</span>
+                    <span class="info-val"><span>Student Developer</span></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-key">LEVEL</span>
+                    <span class="info-val"><span>Beginner → Intermediate</span></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-key">APPROACH</span>
+                    <span class="info-val">Learn by Doing</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-key">STYLE</span>
+                    <span class="info-val">Build Fast, Improve Faster</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-key">INTERESTS</span>
+                    <span class="info-val"><span>AI • Web • Apps • Future Tech</span></span>
+                </div>
+            </div>
+
+            <div class="about-card">
+                <h3>[ QUOTE.TXT ]</h3>
+                <br>
+                <p style="font-size:14px; color: var(--green); line-height: 2; border-left: 2px solid var(--green); padding-left: 16px;">
+                    "I'm not a professional yet —<br>
+                    but every line of code I write<br>
+                    brings me closer to who<br>
+                    I want to become."
+                </p>
+                <br>
+                <p style="font-size:11px; color: var(--darker-green);">
+                    — Jonny Affan, 2024
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <div class="divider"><div class="divider-line"></div></div>
+
+    <!-- ========== SKILLS ========== -->
+    <section id="skills">
+        <div class="section-header">
+            <div class="section-tag">// section_03 — skills.db</div>
+            <h2 class="section-title">SKILL MATRIX<span class="cursor-blink">_</span></h2>
+            <div class="section-line"></div>
+        </div>
+
+        <div class="skills-grid">
+            <div class="skill-card">
+                <div class="skill-card-header">
+                    <div class="skill-icon">🌐</div>
+                    <h3>WEB DEVELOPMENT</h3>
+                </div>
+                <div class="skill-item">
+                    <div class="skill-top"><span class="skill-name">HTML5</span><span class="skill-pct">75%</span></div>
+                    <div class="skill-bar"><div class="skill-fill" style="--fill: 75%"></div></div>
+                </div>
+                <div class="skill-item">
+                    <div class="skill-top"><span class="skill-name">CSS3</span><span class="skill-pct">65%</span></div>
+                    <div class="skill-bar"><div class="skill-fill" style="--fill: 65%"></div></div>
+                </div>
+                <div class="skill-item">
+                    <div class="skill-top"><span class="skill-name">JavaScript</span><span class="skill-pct">45%</span></div>
+                    <div class="skill-bar"><div class="skill-fill" style="--fill: 45%"></div></div>
+                </div>
+                <div class="skill-item">
+                    <div class="skill-top"><span class="skill-name">UI/UX Design</span><span class="skill-pct">50%</span></div>
+                    <div class="skill-bar"><div class="skill-fill" style="--fill: 50%"></div></div>
+                </div>
+            </div>
+
+            <div class="skill-card">
+                <div class="skill-card-header">
+                    <div class="skill-icon">🤖</div>
+                    <h3>AI & MACHINE LEARNING</h3>
+                </div>
+                <div class="skill-item">
+                    <div class="skill-top"><span class="skill-name">Python Basics</span><span class="skill-pct">40%</span></div>
+                    <div class="skill-bar"><div class="skill-fill" style="--fill: 40%"></div></div>
+                </div>
+                <div class="skill-item">
+                    <div class="skill-top"><span class="skill-name">AI Concepts</span><span class="skill-pct">35%</span></div>
+                    <div class="skill-bar"><div class="skill-fill" style="--fill: 35%"></div></div>
+                </div>
+                <div class="skill-item">
+                    <div class="skill-top"><span class="skill-name">A.N PHANTOM Dev</span><span class="skill-pct">30%</span></div>
+                    <div class="skill-bar"><div class="skill-fill" style="--fill: 30%"></div></div>
+                </div>
+                <div class="skill-item">
+                    <div class="skill-top"><span class="skill-name">Logic Building</span><span class="skill-pct">55%</span></div>
+                    <div class="skill-bar"><div class="skill-fill" style="--fill: 55%"></div></div>
+                </div>
+            </div>
+
+            <div class="skill-card">
+                <div class="skill-card-header">
+                    <div class="skill-icon">📱</div>
+                    <h3>MOBILE & APPS</h3>
+                </div>
+                <div class="skill-item">
+                    <div class="skill-top"><span class="skill-name">App Concepts</span><span class="skill-pct">40%</span></div>
+                    <div class="skill-bar"><div class="skill-fill" style="--fill: 40%"></div></div>
+                </div>
+                <div class="skill-item">
+                    <div class="skill-top"><span class="skill-name">UI Planning</span><span class="skill-pct">50%</span></div>
+                    <div class="skill-bar"><div class="skill-fill" style="--fill: 50%"></div></div>
+                </div>
+                <div class="skill-item">
+                    <div class="skill-top"><span class="skill-name">React Native (Learning)</span><span class="skill-pct">15%</span></div>
+                    <div class="skill-bar"><div class="skill-fill" style="--fill: 15%"></div></div>
+                </div>
+                <div class="skill-item">
+                    <div class="skill-top"><span class="skill-name">Problem Solving</span><span class="skill-pct">60%</span></div>
+                    <div class="skill-bar"><div class="skill-fill" style="--fill: 60%"></div></div>
+                </div>
+            </div>
+
+            <div class="skill-card">
+                <div class="skill-card-header">
+                    <div class="skill-icon">⚡</div>
+                    <h3>SOFT SKILLS</h3>
+                </div>
+                <div class="skill-item">
+                    <div class="skill-top"><span class="skill-name">Self Learning</span><span class="skill-pct">90%</span></div>
+                    <div class="skill-bar"><div class="skill-fill" style="--fill: 90%"></div></div>
+                </div>
+                <div class="skill-item">
+                    <div class="skill-top"><span class="skill-name">Creativity</span><span class="skill-pct">80%</span></div>
+                    <div class="skill-bar"><div class="skill-fill" style="--fill: 80%"></div></div>
+                </div>
+                <div class="skill-item">
+                    <div class="skill-top"><span class="skill-name">Motivation</span><span class="skill-pct">95%</span></div>
+                    <div class="skill-bar"><div class="skill-fill" style="--fill: 95%"></div></div>
+                </div>
+                <div class="skill-item">
+                    <div class="skill-top"><span class="skill-name">Consistency</span><span class="skill-pct">70%</span></div>
+                    <div class="skill-bar"><div class="skill-fill" style="--fill: 70%"></div></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="divider"><div class="divider-line"></div></div>
+
+    <!-- ========== PROJECTS ========== -->
+    <section id="projects">
+        <div class="section-header">
+            <div class="section-tag">// section_04 — projects.json</div>
+            <h2 class="section-title">PROJECTS<span class="cursor-blink">_</span></h2>
+            <div class="section-line"></div>
+        </div>
+
+        <div class="projects-grid">
+            <div class="project-card">
+                <div class="project-num">01</div>
+                <div class="project-status active">
+                    <div class="project-status-dot"></div>
+                    IN DEVELOPMENT
+                </div>
+                <div class="project-title">A.N PHANTOM AI</div>
+                <p class="project-desc">
+                    My own AI system currently being built from scratch.
+                    Named after my initials — Affan Nadeem PHANTOM.
+                    Goal: A smart assistant with unique capabilities built by a student for the world.
+                </p>
+                <div class="project-tags">
+                    <span class="project-tag">Python</span>
+                    <span class="project-tag">AI</span>
+                    <span class="project-tag">Machine Learning</span>
+                    <span class="project-tag">Custom Build</span>
+                </div>
+                <div class="project-footer">
+                    <span class="project-link">⟶ FLAGSHIP PROJECT</span>
+                </div>
+            </div>
+
+            <div class="project-card">
+                <div class="project-num">02</div>
+                <div class="project-status dev">
+                    <div class="project-status-dot"></div>
+                    BUILDING
+                </div>
+                <div class="project-title">PERSONAL PORTFOLIO</div>
+                <p class="project-desc">
+                    This very website you're looking at right now.
+                    Built with pure HTML, CSS, and JavaScript with a full
+                    hacker-style terminal aesthetic. Matrix rain, glitch effects and more.
+                </p>
+                <div class="project-tags">
+                    <span class="project-tag">HTML5</span>
+                    <span class="project-tag">CSS3</span>
+                    <span class="project-tag">JavaScript</span>
+                    <span class="project-tag">Design</span>
+                </div>
+                <div class="project-footer">
+                    <span class="project-link">⟶ YOU'RE LOOKING AT IT</span>
+                </div>
+            </div>
+
+            <div class="project-card">
+                <div class="project-num">03</div>
+                <div class="project-status planned">
+                    <div class="project-status-dot"></div>
+                    PLANNED
+                </div>
+                <div class="project-title">PHANTOM WEB APP</div>
+                <p class="project-desc">
+                    A full-stack web application powered by A.N PHANTOM AI.
+                    Users will be able to interact with the AI directly through
+                    a clean, fast and powerful web interface.
+                </p>
+                <div class="project-tags">
+                    <span class="project-tag">React</span>
+                    <span class="project-tag">Node.js</span>
+                    <span class="project-tag">AI API</span>
+                    <span class="project-tag">Full Stack</span>
+                </div>
+                <div class="project-footer">
+                    <span class="project-link">⟶ COMING SOON</span>
+                </div>
+            </div>
+
+            <div class="project-card">
+                <div class="project-num">04</div>
+                <div class="project-status planned">
+                    <div class="project-status-dot"></div>
+                    PLANNED
+                </div>
+                <div class="project-title">PHANTOM MOBILE APP</div>
+                <p class="project-desc">
+                    Mobile version of A.N PHANTOM for Android & iOS.
+                    Bringing AI power to everyone's pocket.
+                    Currently in concept and planning phase.
+                </p>
+                <div class="project-tags">
+                    <span class="project-tag">React Native</span>
+                    <span class="project-tag">Mobile</span>
+                    <span class="project-tag">Android</span>
+                    <span class="project-tag">iOS</span>
+                </div>
+                <div class="project-footer">
+                    <span class="project-link">⟶ FUTURE PROJECT</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="divider"><div class="divider-line"></div></div>
+
+    <!-- ========== PHANTOM AI SECTION ========== -->
+    <section id="phantom" style="max-width:100%; padding: 0;">
+        <div class="phantom-section" style="max-width:1200px; margin: 40px auto;">
+            <div class="hex-bg"></div>
+            <div class="phantom-grid">
+                <div class="phantom-info">
+                    <div style="font-size:11px; letter-spacing:4px; color: var(--darker-green); margin-bottom:8px;">// FLAGSHIP PROJECT</div>
+                    <h2 class="glitch" data-text="A.N PHANTOM">A.N PHANTOM</h2>
+                    <div class="phantom-sub">ARTIFICIAL INTELLIGENCE SYSTEM — v0.1.0</div>
+                    <p>
+                        A.N PHANTOM is my personal AI project — built from the ground up by me,
+                        Affan Nadeem. The name combines my initials (A.N) with PHANTOM —
+                        representing something powerful, unseen, and intelligent.
+                    </p>
+                    <p>
+                        This isn't just a project — it's my biggest dream.
+                        As a 15-year-old student from Fort Abbas, building my own AI
+                        shows that age and location are just numbers.
+                    </p>
+                    <div class="phantom-features">
+                        <div class="phantom-feat">Natural Language Processing</div>
+                        <div class="phantom-feat">Smart Responses</div>
+                        <div class="phantom-feat">Custom Training Data</div>
+                        <div class="phantom-feat">Web Interface</div>
+                        <div class="phantom-feat">Mobile App (Planned)</div>
+                        <div class="phantom-feat">Open API (Planned)</div>
+                        <div class="phantom-feat">Voice Support (Future)</div>
+                        <div class="phantom-feat">Self Improvement</div>
+                    </div>
+                </div>
+
+                <div class="phantom-terminal">
+                    <div class="terminal-header">
+                        <div class="terminal-header-dots">
+                            <div class="th-dot th-dot-r"></div>
+                            <div class="th-dot th-dot-y"></div>
+                            <div class="th-dot th-dot-g"></div>
+                        </div>
+                        <div class="terminal-header-title">phantom-ai — interactive shell</div>
+                    </div>
+                    <div class="terminal-body" style="min-height: 280px;">
+                        <div class="t-line"><span class="t-out">Initializing A.N PHANTOM v0.1.0...</span></div>
+                        <div class="t-line"><span class="t-success">[✓] Core modules loaded</span></div>
+                        <div class="t-line"><span class="t-success">[✓] Neural pathways connected</span></div>
+                        <div class="t-line"><span class="t-warn">[~] Training in progress: 34.7%</span></div>
+                        <br>
+                        <div class="t-line"><span class="t-prompt">user@phantom:~$</span> <span class="t-cmd">./phantom --talk</span></div>
+                        <div class="t-line"><span style="color:#fff;">PHANTOM &gt;</span> <span class="t-out">Hello. I am A.N PHANTOM.</span></div>
+                        <div class="t-line"><span class="t-out">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I was created by Affan Nadeem.</span></div>
+                        <div class="t-line"><span class="t-out">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Still learning. Still growing.</span></div>
+                        <div class="t-line"><span class="t-out">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;One day I will be great.</span></div>
+                        <br>
+                        <div class="t-line"><span class="t-prompt">user@phantom:~$</span> <span class="typing-cursor"></span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== LEARNING PATH ========== -->
+    <section id="path">
+        <div class="section-header">
+            <div class="section-tag">// section_06 — roadmap.log</div>
+            <h2 class="section-title">LEARNING PATH<span class="cursor-blink">_</span></h2>
+            <div class="section-line"></div>
+        </div>
+
+        <div class="path-container">
+            <div class="path-line"></div>
+
+            <div class="path-item">
+                <div class="path-dot active"></div>
+                <div class="path-content">
+                    <div class="path-label">PHASE 01 — COMPLETED</div>
+                    <h3>WEB FOUNDATIONS</h3>
+                    <p>Learned HTML & CSS basics. Started building simple web pages and understanding how the web works. First step into the dev world from Fort Abbas.</p>
+                </div>
+            </div>
+
+            <div class="path-item">
+                <div class="path-dot active"></div>
+                <div class="path-content">
+                    <div class="path-label">PHASE 02 — CURRENT</div>
+                    <h3>JAVASCRIPT & INTERACTIVITY</h3>
+                    <p>Learning JavaScript to make websites dynamic and interactive. Building projects like this portfolio to practice every day. Matrix rain coded by me!</p>
+                </div>
+            </div>
+
+            <div class="path-item">
+                <div class="path-dot"></div>
+                <div class="path-content">
+                    <div class="path-label">PHASE 03 — UPCOMING</div>
+                    <h3>PYTHON & AI BASICS</h3>
+                    <p>Deep dive into Python for AI and ML. Start formally training A.N PHANTOM AI. Learn libraries like NumPy, Pandas and TensorFlow basics.</p>
+                </div>
+            </div>
+
+            <div class="path-item">
+                <div class="path-dot"></div>
+                <div class="path-content">
+                    <div class="path-label">PHASE 04 — FUTURE</div>
+                    <h3>FULL STACK + MOBILE</h3>
+                    <p>Build complete web applications with backend. Start React Native for mobile development. Launch first real app to the world from Pakistan.</p>
+                </div>
+            </div>
+
+            <div class="path-item">
+                <div class="path-dot"></div>
+                <div class="path-content">
+                    <div class="path-label">PHASE 05 — THE DREAM</div>
+                    <h3>LAUNCH A.N PHANTOM</h3>
+                    <p>Release A.N PHANTOM AI to the public. Build a tech product that people around the world actually use. Prove that a student from 211-9R can build something great.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="divider"><div class="divider-line"></div></div>
+
+    <!-- ========== CONTACT ========== -->
+    <section id="contact">
+        <div class="section-header">
+            <div class="section-tag">// section_07 — contact.sh</div>
+            <h2 class="section-title">GET IN TOUCH<span class="cursor-blink">_</span></h2>
+            <div class="section-line"></div>
+        </div>
+
+        <div class="contact-grid">
+            <div class="contact-info">
+                <h3>[ REACH ME AT ]</h3>
+
+                <div class="contact-item">
+                    <div class="contact-icon">📍</div>
+                    <div class="contact-item-info">
+                        <div class="contact-item-label">LOCATION</div>
+                        <div class="contact-item-val">211-9R, Fort Abbas, Punjab, Pakistan</div>
+                    </div>
+                </div>
+
+                <div class="contact-item">
+                    <div class="contact-icon">🎓</div>
+                    <div class="contact-item-info">
+                        <div class="contact-item-label">INSTITUTION</div>
+                        <div class="contact-item-val">Punjab College Fort Abbas — 1st Year</div>
+                    </div>
+                </div>
+
+                <div class="contact-item">
+                    <div class="contact-icon">🤖</div>
+                    <div class="contact-item-info">
+                        <div class="contact-item-label">AI PROJECT</div>
+                        <div class="contact-item-val">A.N PHANTOM — In Development</div>
+                    </div>
+                </div>
+
+                <div class="contact-item">
+                    <div class="contact-icon">⚡</div>
+                    <div class="contact-item-info">
+                        <div class="contact-item-label">STATUS</div>
+                        <div class="contact-item-val" style="color: var(--green);">Open to Collaboration & Learning</div>
+                    </div>
+                </div>
+
+                <br>
+                <div class="terminal-window" style="margin-top: 10px;">
+                    <div class="terminal-header">
+                        <div class="terminal-header-dots">
+                            <div class="th-dot th-dot-r"></div>
+                            <div class="th-dot th-dot-y"></div>
+                            <div class="th-dot th-dot-g"></div>
+                        </div>
+                        <div class="terminal-header-title">ping jonny-affan</div>
+                    </div>
+                    <div class="terminal-body">
+                        <div class="t-line"><span class="t-prompt">$</span> <span class="t-cmd">ping jonny-affan.pk</span></div>
+                        <div class="t-line"><span class="t-success">PING jonny-affan.pk: 56 bytes of data</span></div>
+                        <div class="t-line"><span class="t-success">64 bytes: icmp_seq=0 time=1ms</span></div>
+                        <div class="t-line"><span class="t-success">Response: ALWAYS READY TO CONNECT</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="contact-form">
+                <h3>[ SEND MESSAGE ]</h3>
+                <div class="form-group">
+                    <label class="form-label">// YOUR NAME</label>
+                    <input type="text" class="form-input" placeholder="Enter your name...">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">// YOUR EMAIL</label>
+                    <input type="email" class="form-input" placeholder="Enter your email...">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">// SUBJECT</label>
+                    <input type="text" class="form-input" placeholder="Message subject...">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">// MESSAGE</label>
+                    <textarea class="form-textarea" placeholder="Type your message here..."></textarea>
+                </div>
+                <button class="btn-primary" style="width: 100%;" onclick="sendMsg()">
+                    ./send_message.sh
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== FOOTER ========== -->
+    <footer>
+        <div class="footer-left">
+            <span>ROOT@PHANTOM:~$</span> echo "Made with ❤️ from Fort Abbas, Pakistan"<br>
+            <span style="color: var(--darker-green);">&copy; 2024 Muhammad Affan Nadeem — All Rights Reserved</span>
+        </div>
+        <div class="footer-center">
+            <div class="footer-logo">JONNY AFFAN</div>
+            <div style="font-size:9px; color: var(--darker-green); margin-top: 4px; letter-spacing: 2px;">A.N PHANTOM SYSTEM</div>
+        </div>
+        <div class="footer-right">
+            <span style="color: var(--green);">Born:</span> 02 Aug 2009<br>
+            <span style="color: var(--green);">Village:</span> 211-9R, Fort Abbas<br>
+            <span style="color: var(--green);">Punjab, Pakistan 🇵🇰</span>
+        </div>
+    </footer>
+
+</div>
+
+<script>
+// ========== LOADING SCREEN ==========
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        document.getElementById('loading').classList.add('hide');
+        setTimeout(() => {
+            document.getElementById('loading').style.display = 'none';
+        }, 800);
+    }, 2800);
+});
+
+// ========== LIVE CLOCK ==========
+function updateClock() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2, '0');
+    const m = String(now.getMinutes()).padStart(2, '0');
+    const s = String(now.getSeconds()).padStart(2, '0');
+    document.getElementById('live-time').textContent = `${h}:${m}:${s}`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ========== CURSOR DOT ==========
+const cursorDot = document.getElementById('cursorDot');
+document.addEventListener('mousemove', (e) => {
+    cursorDot.style.left = e.clientX - 4 + 'px';
+    cursorDot.style.top = e.clientY - 4 + 'px';
+});
+
+// ========== MATRIX RAIN ==========
+const canvas = document.getElementById('matrix-canvas');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEF<>{}[]//\\=+-*&^%$#@!PHANTOM AFFAN NADEEM 01';
+const fontSize = 13;
+let columns;
+let drops;
+
+function initMatrix() {
+    columns = Math.floor(canvas.width / fontSize);
+    drops = Array(columns).fill(1);
+}
+initMatrix();
+window.addEventListener('resize', initMatrix);
+
+function drawMatrix() {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    for (let i = 0; i < drops.length; i++) {
+        const char = chars[Math.floor(Math.random() * chars.length)];
+        const brightness = Math.random();
+
+        if (brightness > 0.98) {
+            ctx.fillStyle = '#ffffff';
+        } else if (brightness > 0.9) {
+            ctx.fillStyle = '#00ff41';
+        } else {
+            ctx.fillStyle = '#00cc33';
+        }
+
+        ctx.font = fontSize + 'px Courier New';
+        ctx.fillText(char, i * fontSize, drops[i] * fontSize);
+
+        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+            drops[i] = 0;
+        }
+        drops[i]++;
+    }
+}
+
+setInterval(drawMatrix, 45);
+
+// ========== COUNT UP ANIMATION ==========
+function animateCount(el, target) {
+    let current = 0;
+    const step = Math.ceil(target / 40);
+    const timer = setInterval(() => {
+        current += step;
+        if (current >= target) {
+            current = target;
+            clearInterval(timer);
+        }
+        el.textContent = current;
+    }, 40);
+}
+
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            const el = entry.target;
+            const target = parseInt(el.getAttribute('data-count'));
+            animateCount(el, target);
+            observer.unobserve(el);
+        }
+    });
+}, { threshold: 0.5 });
+
+document.querySelectorAll('[data-count]').forEach(el => observer.observe(el));
+
+// ========== SMOOTH SCROLL ==========
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    });
+});
+
+// ========== SEND MESSAGE FUNCTION ==========
+function sendMsg() {
+    const btn = document.querySelector('.contact-form .btn-primary');
+    const original = btn.textContent;
+    btn.textContent = '[✓] MESSAGE_SENT.SH — SUCCESS';
+    btn.style.background = 'var(--green)';
+    btn.style.color = '#000';
+    setTimeout(() => {
+        btn.textContent = original;
+        btn.style.background = '';
+        btn.style.color = '';
+    }, 3000);
+}
+
+// ========== GLITCH RANDOM ==========
+setInterval(() => {
+    const glitchEls = document.querySelectorAll('.glitch');
+    const randomEl = glitchEls[Math.floor(Math.random() * glitchEls.length)];
+    if (randomEl) {
+        randomEl.style.animation = 'none';
+        setTimeout(() => {
+            randomEl.style.animation = '';
+        }, 100);
+    }
+}, 4000);
+
+// ========== TYPING EFFECT FOR HERO TAG ==========
+const heroTag = document.querySelector('.hero-tag');
+if (heroTag) {
+    const text = heroTag.textContent;
+    heroTag.textContent = '';
+    let i = 0;
+    const typeInterval = setInterval(() => {
+        if (i < text.length) {
+            heroTag.textContent += text[i];
+            i++;
+        } else {
+            clearInterval(typeInterval);
+        }
+    }, 50);
+}
+
+// ========== RANDOM TERMINAL FLICKER ==========
+setInterval(() => {
+    const terminals = document.querySelectorAll('.terminal-window');
+    const rand = terminals[Math.floor(Math.random() * terminals.length)];
+    if (rand) {
+        rand.style.opacity = '0.7';
+        setTimeout(() => { rand.style.opacity = '1'; }, 80);
+    }
+}, 6000);
+
+console.log('%c[JONNY AFFAN SYSTEM]', 'color: #00ff41; font-size: 16px; font-weight: bold; text-shadow: 0 0 10px #00ff41;');
+console.log('%cA.N PHANTOM v0.1.0 — Initializing...', 'color: #00cc33; font-size: 12px;');
+console.log('%cBuilt by: Muhammad Affan Nadeem | Fort Abbas, Punjab, Pakistan', 'color: #008f11; font-size: 11px;');
+</script>
+
+</body>
+</html>
